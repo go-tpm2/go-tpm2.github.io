@@ -1,0 +1,181 @@
+{{ define "main" }}
+<section class="hero">
+  <h1>
+    <span class="accent">{{ .Site.Params.heroAccent }}</span>
+    {{- with .Site.Params.statusBadge }}<span class="status">{{ . }}</span>{{ end -}}
+  </h1>
+  {{ with .Site.Params.heroTagline }}<p class="tag">{{ . }}</p>{{ end }}
+  <div class="intro">
+    {{ range .Site.Params.heroIntro }}<p>{{ . | safeHTML }}</p>{{ end }}
+  </div>
+
+  {{ partial "mesh.html" . }}
+</section>
+
+<section id="why">
+  <h2>Why go-tpm2</h2>
+  <p>
+    Talking to a TPM 2.0 from Go usually means one of two things : binding the
+    cgo-heavy <code>tpm2-tss</code> C stack, or depending on a Linux kernel and
+    <code>/dev/tpm0</code>. Neither runs in a bare-metal TamaGo guest, a UEFI
+    payload, or a CGO-free microVM. <strong>go-tpm2</strong> factors a TPM 2.0
+    stack into a narrow waist &mdash; <code>common</code> defines a single
+    <code>Transport</code> interface (<code>Send(cmd)&rarr;rsp</code>), a
+    <code>Regs</code> MMIO accessor, and the <strong>big-endian</strong> TPM2
+    wire codec &mdash; and builds the whole command API
+    (<code>tpm2</code>) and three transports (<code>tis</code>,
+    <code>crb</code>, <code>efitcg2</code>) on top. Pure Go, no cgo, no kernel,
+    portable across backplanes.
+  </p>
+</section>
+
+<section id="transports">
+  <h2>Three transports, one API</h2>
+  <p>
+    The same TPM 2.0 command layer over three completely different backplanes.
+    Each plugs into <code>common</code> &mdash; the MMIO transports drive
+    <code>common.Regs</code>; <code>efitcg2</code> reaches a firmware TPM
+    through an injected closure so <code>go-tpm2</code> stays UEFI-free.
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/tis">tis</a> · TIS / FIFO MMIO</h4>
+      <p>The classic TPM Interface Specification : a <code>STS</code> / <code>DATA_FIFO</code> register file at a fixed MMIO base, driven through <code>common.Regs</code>. Byte-FIFO with the <code>Expect</code> / <code>dataAvail</code> handshake and per-locality access.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/crb">crb</a> · CRB command buffer</h4>
+      <p>The PTP Command/Response Buffer interface : ring the doorbell (<code>Start</code>), place the command in the command buffer, read the response back. A <code>goIdle</code> / <code>cmdReady</code> state machine &mdash; no byte-FIFO.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/efitcg2">efitcg2</a> · EFI_TCG2_PROTOCOL</h4>
+      <p>A firmware TPM exposed by UEFI Boot Services. <code>SubmitCommand</code> + <code>HashLogExtendEvent</code> through an injected firmware-call closure &mdash; the measured-boot path that extends a PCR <em>and</em> appends the matching TCG event-log record in one call.</p>
+    </div>
+  </div>
+</section>
+
+<section id="attestation">
+  <h2>The attestation story</h2>
+  <p>
+    <code>go-tpm2/tpm2</code> ships the <strong>full remote-attestation
+    chain</strong>, end to end, plus local sealing &mdash; not a toy subset.
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h4>Foundation</h4>
+      <p>Startup, GetRandom, SelfTest, PCR_Read / PCR_Extend, and GetCapability with typed decode of the capability blobs.</p>
+    </div>
+    <div class="card">
+      <h4>EK &amp; AK</h4>
+      <p>CreatePrimary, an ECC-P256 <strong>Attestation Key</strong>, and the <strong>Endorsement Key</strong> per the TCG EK Credential Profile.</p>
+    </div>
+    <div class="card">
+      <h4>Credential activation</h4>
+      <p>Off-TPM <code>MakeCredential</code> + <code>TPM2_ActivateCredential</code> proves the AK and EK live on the <strong>same TPM</strong> &mdash; the binding a verifier needs before trusting a quote.</p>
+    </div>
+    <div class="card">
+      <h4>Quote &rarr; Verify</h4>
+      <p><code>Quote</code> signs a <code>TPMS_ATTEST</code> over a PCR selection ; <code>VerifyQuote</code> checks the ECDSA-P256 signature <strong>and</strong> re-derives and compares the <code>pcrDigest</code>.</p>
+    </div>
+    <div class="card">
+      <h4>PolicyPCR sealing</h4>
+      <p>Seal a secret to a PCR state and unseal it <strong>only when the PCRs still match</strong> &mdash; the measured-boot payoff, locally on the same TPM. NV storage backs persistent indices.</p>
+    </div>
+    <div class="card">
+      <h4>The whole loop</h4>
+      <p><strong>EK &rarr; AK &rarr; ActivateCredential &rarr; PCR_Extend &rarr; Quote &rarr; verify</strong>, plus PolicyPCR seal/unseal &mdash; the complete attestation chain, in pure Go.</p>
+    </div>
+  </div>
+</section>
+
+<section id="repos">
+  <h2>Repositories</h2>
+  <div class="grid">
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/common">common</a> · v0.1.0</h4>
+      <p>The narrow waist : the <code>Transport</code> interface (<code>Send(cmd)&rarr;rsp</code>), the <code>Regs</code> MMIO accessor, the <strong>big-endian</strong> TPM2 wire codec, and the shared constants. Everything else plugs in.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/tis">tis</a> · v0.1.0</h4>
+      <p>TPM <strong>TIS/FIFO</strong> transport &mdash; the classic MMIO interface. <code>Regs</code>-driven <code>STS</code> / <code>DATA_FIFO</code> state machine ; <code>locality</code>, <code>Expect</code> / <code>dataAvail</code> handshake.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/crb">crb</a> · v0.1.0</h4>
+      <p>TPM <strong>CRB</strong> transport &mdash; the Command/Response Buffer MMIO interface (PTP &sect;6). Doorbell <code>Start</code> + <code>goIdle</code> / <code>cmdReady</code> state machine over the command/response buffers.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/efitcg2">efitcg2</a> · v0.1.1</h4>
+      <p><strong><code>EFI_TCG2_PROTOCOL</code></strong> transport &mdash; a firmware TPM under UEFI Boot Services, reached through an injected firmware-call closure so <code>go-tpm2</code> stays UEFI-free. <code>SubmitCommand</code> + <code>HashLogExtendEvent</code> for measured boot.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/tpm2">tpm2</a> · v0.5.0</h4>
+      <p>The command API over any <code>Transport</code> : Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest ; CreatePrimary + ECC-P256 AK ; <strong>remote attestation</strong> (Quote &rarr; VerifyQuote) ; <strong>PolicyPCR sealing</strong> ; NV storage ; the <strong>EK</strong> (EK Credential Profile) ; and <strong>credential activation</strong> (MakeCredential / ActivateCredential).</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.5.0</h4>
+      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, and runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware.</p>
+    </div>
+  </div>
+</section>
+
+<section id="validation">
+  <h2>Validation</h2>
+  <p>
+    A TPM stack that only passes its own unit tests has proven only that it is
+    self-consistent. <code>go-tpm2/validate</code> proves the wire is right
+    against <strong>real</strong> implementations. Every <code>tpm2</code>
+    command is validated end-to-end against a real
+    <a href="https://github.com/stefanberger/swtpm">swtpm</a> <strong>0.10.1</strong>,
+    over <strong>both</strong> the <code>tis</code> and <code>crb</code>
+    transports &mdash; a bare-metal
+    <a href="https://github.com/usbarmory/tamago">TamaGo</a> guest under QEMU
+    drives the real software-TPM and round-trips every command, including the
+    full EK&rarr;AK&rarr;ActivateCredential&rarr;Quote&rarr;verify chain and
+    PolicyPCR seal/unseal. The <code>efitcg2</code> measured-boot loop is
+    validated on <strong>real x86 firmware</strong> &mdash; Fedora
+    <code>OVMF.stateless.fd</code> + a <code>tpm-crb</code> device +
+    <code>swtpm</code> &mdash; where the loader extends <strong>PCR4</strong>
+    via <code>efitcg2.HashLogExtendEvent</code> and the extension is
+    <strong>confirmed in the firmware DEBUG log</strong>.
+  </p>
+  <p>
+    The running theme &mdash; the same discipline that makes
+    <a href="https://github.com/go-virtio">go-virtio</a> catch 9 encoding bugs
+    against real renderers &mdash; is that <strong>real emulators and real
+    firmware see what a self-consistent fake cannot</strong>. Here it caught
+    <strong>14 real bugs</strong>, the sharpest five being :
+  </p>
+  <ul class="features">
+    <li>the CRB <strong>data buffer is 3968 bytes, not 4096</strong> (= <code>0x1000 &minus; 0x80</code>, the buffer offset) &mdash; a fake never noticed the missing header ;</li>
+    <li>TIS <code>stsValid</code> qualifies <strong>only</strong> the <code>Expect</code> / <code>dataAvail</code> bits, nothing else ;</li>
+    <li><code>TPM_RC_POLICY_FAIL</code> is <code>0x09D</code> &mdash; a wrong-PCR unseal must fail with <em>that</em> code ;</li>
+    <li><code>GetCapability(CAP_PCRS)</code> needs a <strong>non-zero <code>propertyCount</code></strong> or real firmware returns nothing ;</li>
+    <li>the <code>efitcg2</code> output block must be <strong>&le; the CRB <code>MaxResponseSize</code> 3968</strong> &mdash; the same 3968, found a <em>second</em> time, on real firmware.</li>
+  </ul>
+  <p>Real hardware sees what a fake cannot.</p>
+</section>
+
+<section id="quality">
+  <h2>Quality bar</h2>
+  <ul class="features">
+    <li><strong>Pure Go.</strong> <code>CGO_ENABLED=0</code> across the org. No <code>tpm2-tss</code> shim, no <code>/dev/tpm0</code>, no kernel dependency.</li>
+    <li><strong>100% statement coverage</strong> is the bar &mdash; error branches, not just happy paths. Measured, not asserted.</li>
+    <li><strong>Spec-traceable.</strong> Every register, command field, and return code cites the TCG TPM 2.0 Library, PTP, or EK Credential Profile section it implements.</li>
+    <li><strong>Transport-pluggable.</strong> One command API over TIS MMIO, CRB MMIO, and EFI_TCG2 &mdash; proven on a real <code>swtpm</code> and real OVMF.</li>
+    <li><strong>Multi-arch.</strong> No architecture-specific assembly. Same source on amd64, arm64, riscv64, loongarch64.</li>
+    <li><strong>BSD-3-Clause</strong> on every source file.</li>
+  </ul>
+</section>
+
+<section id="users">
+  <h2>Who uses it</h2>
+  <p>
+    The first consumer is <a href="https://github.com/cloud-boot"><strong>cloud-boot</strong></a>
+    measured boot &mdash; the TamaGo + UEFI loader measures each loaded image
+    into a PCR via <code>efitcg2</code> as it boots. Beyond that :
+    <a href="https://github.com/openweft">weft</a> microVM <strong>attestation</strong>,
+    <strong>measured boot</strong> of firmware payloads, and <strong>TamaGo
+    secure boot</strong> &mdash; any Go project that needs a TPM without
+    dragging in cgo or a kernel.
+  </p>
+</section>
+{{ end }}

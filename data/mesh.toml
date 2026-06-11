@@ -1,0 +1,191 @@
+# go-tpm2 stack visualisation — read by layouts/partials/mesh.html.
+#
+# Three rows :
+#   Top    : the tpm2 command API (attestation · sealing · NV · EK/AK).
+#   Middle : the common waist — single Transport interface + BE codec.
+#   Bottom : the three transports + the real validation targets.
+#
+# Spheres flow common → tpm2 → transport → real TPM, encoding
+# "one command API, three backplanes, validated on real hardware".
+
+# ---------- Containers (back layer rectangles) ----------
+
+# Top band : the command API.
+[[containers]]
+kind  = "dc"
+x     = 60
+y     = 60
+w     = 1080
+h     = 130
+label = "TPM 2.0 COMMAND API"
+lx    = 130
+ly    = 50
+
+# Middle band : common.
+[[containers]]
+kind  = "rack"
+x     = 330
+y     = 240
+w     = 540
+h     = 110
+label = "go-tpm2/common — Transport · Regs · BE codec"
+lx    = 400
+ly    = 232
+
+# Bottom band : transports + real targets.
+[[containers]]
+kind  = "dc"
+x     = 60
+y     = 400
+w     = 1080
+h     = 120
+label = "TRANSPORTS · REAL VALIDATION TARGETS"
+lx    = 130
+ly    = 392
+
+# ---------- Nodes ----------
+
+# Top row : the tpm2 command API. One emphasised node carrying the whole
+# capability set, flanked by the two headline capability clusters.
+[[nodes]]
+x = 300
+y = 130
+kind = "arch"
+label = "attestation"
+halo_r = 15
+core_r = 8
+label_y = -26
+[[nodes]]
+x = 600
+y = 130
+kind = "arch"
+label = "tpm2 · command API"
+halo_r = 20
+core_r = 11
+label_y = -30
+[[nodes]]
+x = 900
+y = 130
+kind = "arch"
+label = "PolicyPCR seal"
+halo_r = 15
+core_r = 8
+label_y = -26
+
+# Centre hub : common.
+[[nodes]]
+x = 600
+y = 295
+kind = "hub"
+label = "common"
+halo_r = 26
+core_r = 14
+label_y = 48
+
+# Bottom row : the three transports. Labels below.
+[[nodes]]
+x = 240
+y = 460
+kind = "distro"
+label = "tis · TIS/FIFO"
+halo_r = 13
+core_r = 7
+label_y = 26
+[[nodes]]
+x = 600
+y = 460
+kind = "distro"
+label = "crb · CRB MMIO"
+halo_r = 13
+core_r = 7
+label_y = 26
+[[nodes]]
+x = 960
+y = 460
+kind = "distro"
+label = "efitcg2 · EFI_TCG2"
+halo_r = 13
+core_r = 7
+label_y = 26
+
+# ---------- Edges ----------
+
+# Command API ↔ common (the import edge — the command layer consumes
+# common.Transport and nothing else).
+[[edges]]
+x1 = 600
+y1 = 295
+x2 = 300
+y2 = 130
+highlight = true
+[[edges]]
+x1 = 600
+y1 = 295
+x2 = 600
+y2 = 130
+highlight = true
+[[edges]]
+x1 = 600
+y1 = 295
+x2 = 900
+y2 = 130
+highlight = true
+
+# Common ↔ transports.
+[[edges]]
+x1 = 600
+y1 = 295
+x2 = 240
+y2 = 460
+[[edges]]
+x1 = 600
+y1 = 295
+x2 = 600
+y2 = 460
+[[edges]]
+x1 = 600
+y1 = 295
+x2 = 960
+y2 = 460
+
+# ---------- Paths (moving spheres) ----------
+#
+# Each sphere is one command travelling command-API → common → a
+# transport (and back). Staggered timing so the eye sees continuous flow
+# through the waist.
+
+[[paths]]
+d = "M 600 130 L 600 295 L 240 460"
+dur = "5s"
+r = 5
+fill = "var(--accent-3)"
+[[paths]]
+d = "M 300 130 L 600 295 L 600 460"
+dur = "5.5s"
+begin = "0.6s"
+r = 5
+fill = "var(--accent-2)"
+[[paths]]
+d = "M 900 130 L 600 295 L 960 460"
+dur = "5s"
+begin = "1.2s"
+r = 5
+fill = "var(--accent)"
+[[paths]]
+d = "M 600 130 L 600 295 L 960 460"
+dur = "6s"
+begin = "1.8s"
+r = 5
+fill = "var(--accent-3)"
+[[paths]]
+d = "M 300 130 L 600 295 L 240 460"
+dur = "5.5s"
+begin = "2.4s"
+r = 5
+fill = "var(--accent-2)"
+[[paths]]
+d = "M 900 130 L 600 295 L 600 460"
+dur = "6s"
+begin = "3s"
+r = 5
+fill = "var(--accent)"
