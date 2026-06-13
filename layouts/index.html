@@ -84,6 +84,10 @@
       <h4>The whole loop</h4>
       <p><strong>EK &rarr; AK &rarr; ActivateCredential &rarr; PCR_Extend &rarr; Quote &rarr; verify</strong>, plus PolicyPCR seal/unseal &mdash; the complete attestation chain, in pure Go.</p>
     </div>
+    <div class="card">
+      <h4>Fleet admission</h4>
+      <p><a href="https://github.com/go-tpm2/attest">attest</a> packages that chain as a ready protocol &mdash; a <strong>Verifier</strong> + a <strong>Node</strong> agent. A control plane (e.g. <a href="https://github.com/openweft">weft</a>) admits a node to a fleet <strong>only on a verified <code>Quote</code></strong> over a fresh nonce from an EK-bound AK, against a golden PCR policy.</p>
+    </div>
   </div>
 </section>
 
@@ -111,8 +115,12 @@
       <p>The command API over any <code>Transport</code> : Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest ; CreatePrimary + ECC-P256 AK ; <strong>remote attestation</strong> (Quote &rarr; VerifyQuote) ; <strong>PolicyPCR sealing</strong> ; NV storage ; the <strong>EK</strong> (EK Credential Profile) ; and <strong>credential activation</strong> (MakeCredential / ActivateCredential).</p>
     </div>
     <div class="card">
-      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.5.0</h4>
-      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, and runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware.</p>
+      <h4><a href="https://github.com/go-tpm2/attest">attest</a> · v0.1.0</h4>
+      <p>Control-plane <strong>remote-attestation protocol</strong> over <code>tpm2</code> &mdash; a pure-Go <strong>Verifier</strong> + a <strong>Node</strong> agent implementing <strong>node-admission-on-Quote</strong>. A node joins a fleet only if it proves, via a <code>Quote</code> over a fresh nonce signed by an <strong>EK-bound AK</strong>, that it booted an approved stack. Two-phase handshake &mdash; enrollment (<code>MakeCredential</code> / <code>ActivateCredential</code>) then admission (nonce &rarr; <code>Quote</code> &rarr; verify signature, nonce, <code>pcrDigest</code>, golden PCR policy). Pluggable <code>EKRegistry</code> + <code>Policy</code>.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.6.0</h4>
+      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware, and exercises the <code>attest</code> protocol end-to-end via <code>cmd/attestvalidate</code> &mdash; <strong>9 swtpm harnesses</strong> in all.</p>
     </div>
   </div>
 </section>
@@ -172,10 +180,12 @@
     The first consumer is <a href="https://github.com/cloud-boot"><strong>cloud-boot</strong></a>
     measured boot &mdash; the TamaGo + UEFI loader measures each loaded image
     into a PCR via <code>efitcg2</code> as it boots. Beyond that :
-    <a href="https://github.com/openweft">weft</a> microVM <strong>attestation</strong>,
-    <strong>measured boot</strong> of firmware payloads, and <strong>TamaGo
-    secure boot</strong> &mdash; any Go project that needs a TPM without
-    dragging in cgo or a kernel.
+    <a href="https://github.com/openweft">weft</a> microVM <strong>attestation</strong>
+    &mdash; its control plane uses <code>attest</code> for <strong>node
+    admission</strong> and <strong>sealed-secret release</strong>, admitting a
+    node only on a verified <code>Quote</code> &mdash; plus <strong>measured
+    boot</strong> of firmware payloads and <strong>TamaGo secure boot</strong>
+    &mdash; any Go project that needs a TPM without dragging in cgo or a kernel.
   </p>
 </section>
 {{ end }}

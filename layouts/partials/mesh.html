@@ -10,8 +10,9 @@
     4. Spheres — animateMotion-driven, glow-filtered.
 
   go-tpm2's stack metaphor : the narrow common waist runs horizontally
-  between the tpm2 command API (top) and the three transports (bottom).
-  Common's role is to be the single waist — one Transport, three backplanes.
+  between the tpm2 command API and the three transports (bottom), with the
+  attest control-plane protocol at the apex consuming tpm2. Common's role
+  is to be the single waist — one Transport, three backplanes.
 
   All colours come from CSS variables defined in
   static/css/main.css ; this template doesn't bake RGB values.
