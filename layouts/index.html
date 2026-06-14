@@ -115,12 +115,12 @@
       <p>The command API over any <code>Transport</code> : Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest ; CreatePrimary + ECC-P256 AK ; <strong>remote attestation</strong> (Quote &rarr; VerifyQuote) ; <strong>PolicyPCR sealing</strong> ; NV storage ; the <strong>EK</strong> (EK Credential Profile) ; and <strong>credential activation</strong> (MakeCredential / ActivateCredential).</p>
     </div>
     <div class="card">
-      <h4><a href="https://github.com/go-tpm2/attest">attest</a> · v0.1.0</h4>
-      <p>Control-plane <strong>remote-attestation protocol</strong> over <code>tpm2</code> &mdash; a pure-Go <strong>Verifier</strong> + a <strong>Node</strong> agent implementing <strong>node-admission-on-Quote</strong>. A node joins a fleet only if it proves, via a <code>Quote</code> over a fresh nonce signed by an <strong>EK-bound AK</strong>, that it booted an approved stack. Two-phase handshake &mdash; enrollment (<code>MakeCredential</code> / <code>ActivateCredential</code>) then admission (nonce &rarr; <code>Quote</code> &rarr; verify signature, nonce, <code>pcrDigest</code>, golden PCR policy). Pluggable <code>EKRegistry</code> + <code>Policy</code>.</p>
+      <h4><a href="https://github.com/go-tpm2/attest">attest</a> · v0.2.0</h4>
+      <p>Control-plane <strong>remote-attestation protocol</strong> over <code>tpm2</code> &mdash; a pure-Go <strong>Verifier</strong> + a <strong>Node</strong> agent implementing <strong>node-admission-on-Quote</strong>. A node joins a fleet only if it proves, via a <code>Quote</code> over a fresh nonce signed by an <strong>EK-bound AK</strong>, that it booted an approved stack. Two-phase handshake &mdash; enrollment (<code>MakeCredential</code> / <code>ActivateCredential</code>) then admission (nonce &rarr; <code>Quote</code> &rarr; verify signature, nonce, <code>pcrDigest</code>, policy). Pluggable <code>EKRegistry</code> + <code>Policy</code> &mdash; golden PCR digests or <strong><code>EventLogPolicy</code></strong> (TCG event-log replay against a per-measurement allowlist).</p>
     </div>
     <div class="card">
-      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.6.0</h4>
-      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware, and exercises the <code>attest</code> protocol end-to-end via <code>cmd/attestvalidate</code> &mdash; <strong>9 swtpm harnesses</strong> in all.</p>
+      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.7.0</h4>
+      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware, and exercises the <code>attest</code> protocol end-to-end (<code>cmd/attestvalidate</code>, <code>cmd/attesteventlog</code>) &mdash; <strong>10 swtpm harnesses</strong> in all.</p>
     </div>
   </div>
 </section>
