@@ -6,18 +6,18 @@ title   = 'go-tpm2'
 disableKinds = ['taxonomy', 'term', 'rss', 'sitemap']
 
 [params]
-  description = "go-tpm2 is a pure-Go, transport-agnostic TPM 2.0 stack. One Transport interface carries every command across TIS/FIFO MMIO, the CRB command buffer, and EFI_TCG2_PROTOCOL under UEFI — no cgo, no kernel."
+  description = "go-tpm2 is a pure-Go, transport-agnostic TPM 2.0 stack. One Transport interface carries every command across TIS/FIFO MMIO, the CRB command buffer, EFI_TCG2_PROTOCOL under UEFI, and the Linux /dev/tpmrm0 resource manager — no cgo."
   brand       = "go-tpm2"
   github      = "go-tpm2"
   heroAccent  = "go-tpm2"
-  heroTagline = "Pure-Go TPM 2.0. One command API. Three transports."
+  heroTagline = "Pure-Go TPM 2.0. One command API. Four transports."
 
   heroIntro = [
-    "<strong>go-tpm2</strong> is a small family of Go modules implementing a <a href=\"https://trustedcomputinggroup.org/resource/tpm-library-specification/\">TPM 2.0</a> stack &mdash; the guest/firmware-side transports plus the command API &mdash; in pure Go, no cgo, no kernel. One narrow <code>Transport</code> interface carries every command, so the same command layer drives a TPM over TIS/FIFO MMIO, over the CRB command buffer, or over <code>EFI_TCG2_PROTOCOL</code> under UEFI Boot Services.",
+    "<strong>go-tpm2</strong> is a small family of Go modules implementing a <a href=\"https://trustedcomputinggroup.org/resource/tpm-library-specification/\">TPM 2.0</a> stack &mdash; the guest/firmware/node-side transports plus the command API &mdash; in pure Go, no cgo. One narrow <code>Transport</code> interface carries every command, so the same command layer drives a TPM over TIS/FIFO MMIO, over the CRB command buffer, over <code>EFI_TCG2_PROTOCOL</code> under UEFI Boot Services, or over the Linux <code>/dev/tpmrm0</code> resource-manager char device.",
     "Spec-traceable to the TCG TPM 2.0 Library (Parts 1&ndash;4), the PC Client Platform TPM Profile, and the EK Credential Profile. Built for the <a href=\"https://github.com/cloud-boot\">cloud-boot</a> measured-boot loader, but designed to run anywhere a TPM does &mdash; and every command is validated end-to-end against a real <code>swtpm</code> and real UEFI firmware."
   ]
 
-  meshCaption = "<strong>One command API, three transports &mdash; and a control-plane protocol on top.</strong> <code>go-tpm2/common</code> is the narrow waist between the <code>tpm2</code> command API (attestation, sealing, NV, EK/AK) and the three backplanes &mdash; <code>tis</code> (TIS/FIFO MMIO), <code>crb</code> (CRB command buffer), and <code>efitcg2</code> (EFI_TCG2_PROTOCOL). At the apex, <code>attest</code> consumes <code>tpm2</code> to admit a node to a fleet only on a verified <code>Quote</code>. Swap the transport, keep the code."
+  meshCaption = "<strong>One command API, four transports &mdash; and a control-plane protocol on top.</strong> <code>go-tpm2/common</code> is the narrow waist between the <code>tpm2</code> command API (attestation, sealing, NV, EK/AK, Import/WrapToPCR) and the four backplanes &mdash; <code>tis</code> (TIS/FIFO MMIO), <code>crb</code> (CRB command buffer), <code>efitcg2</code> (EFI_TCG2_PROTOCOL), and <code>devtpm</code> (Linux <code>/dev/tpmrm0</code>). At the apex, <code>attest</code> consumes <code>tpm2</code> to admit a node to a fleet only on a verified <code>Quote</code>. Swap the transport, keep the code."
 
 [menu]
   [[menu.main]]

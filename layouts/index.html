@@ -16,26 +16,28 @@
   <h2>Why go-tpm2</h2>
   <p>
     Talking to a TPM 2.0 from Go usually means one of two things : binding the
-    cgo-heavy <code>tpm2-tss</code> C stack, or depending on a Linux kernel and
-    <code>/dev/tpm0</code>. Neither runs in a bare-metal TamaGo guest, a UEFI
-    payload, or a CGO-free microVM. <strong>go-tpm2</strong> factors a TPM 2.0
-    stack into a narrow waist &mdash; <code>common</code> defines a single
-    <code>Transport</code> interface (<code>Send(cmd)&rarr;rsp</code>), a
+    cgo-heavy <code>tpm2-tss</code> C stack, or depending on the cgo-bound
+    <code>tpm2-tss</code> shim. Neither runs in a bare-metal TamaGo guest, a
+    UEFI payload, or a CGO-free microVM. <strong>go-tpm2</strong> factors a
+    TPM 2.0 stack into a narrow waist &mdash; <code>common</code> defines a
+    single <code>Transport</code> interface (<code>Send(cmd)&rarr;rsp</code>), a
     <code>Regs</code> MMIO accessor, and the <strong>big-endian</strong> TPM2
     wire codec &mdash; and builds the whole command API
-    (<code>tpm2</code>) and three transports (<code>tis</code>,
-    <code>crb</code>, <code>efitcg2</code>) on top. Pure Go, no cgo, no kernel,
-    portable across backplanes.
+    (<code>tpm2</code>) and four transports (<code>tis</code>,
+    <code>crb</code>, <code>efitcg2</code>, <code>devtpm</code>) on top. Pure
+    Go, no cgo, portable across backplanes.
   </p>
 </section>
 
 <section id="transports">
-  <h2>Three transports, one API</h2>
+  <h2>Four transports, one API</h2>
   <p>
-    The same TPM 2.0 command layer over three completely different backplanes.
+    The same TPM 2.0 command layer over four completely different backplanes.
     Each plugs into <code>common</code> &mdash; the MMIO transports drive
     <code>common.Regs</code>; <code>efitcg2</code> reaches a firmware TPM
-    through an injected closure so <code>go-tpm2</code> stays UEFI-free.
+    through an injected closure so <code>go-tpm2</code> stays UEFI-free; and
+    <code>devtpm</code> reads/writes the Linux kernel resource-manager char
+    device on a real node.
   </p>
   <div class="grid">
     <div class="card">
@@ -49,6 +51,10 @@
     <div class="card">
       <h4><a href="https://github.com/go-tpm2/efitcg2">efitcg2</a> · EFI_TCG2_PROTOCOL</h4>
       <p>A firmware TPM exposed by UEFI Boot Services. <code>SubmitCommand</code> + <code>HashLogExtendEvent</code> through an injected firmware-call closure &mdash; the measured-boot path that extends a PCR <em>and</em> appends the matching TCG event-log record in one call.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/devtpm">devtpm</a> · /dev/tpmrm0</h4>
+      <p>The node-side host-TPM path: a <code>common.Transport</code> over the Linux kernel TPM resource-manager char device &mdash; one write is one command, one read is the response. Lets <code>attest</code>'s <strong>Node</strong> run on a real Linux node, where the <code>tis</code> / <code>crb</code> MMIO interfaces aren't available. Validated against a real <code>swtpm</code> via its raw-TPM2 socket.</p>
     </div>
   </div>
 </section>
@@ -81,8 +87,12 @@
       <p>Seal a secret to a PCR state and unseal it <strong>only when the PCRs still match</strong> &mdash; the measured-boot payoff, locally on the same TPM. NV storage backs persistent indices.</p>
     </div>
     <div class="card">
+      <h4>Import &amp; WrapToPCR</h4>
+      <p>Wrap an external secret (off-TPM) to a node's storage key + a PCR policy so the node imports + unseals it <strong>only when its boot PCRs match</strong> &mdash; control-plane secret sealing for attested nodes.</p>
+    </div>
+    <div class="card">
       <h4>The whole loop</h4>
-      <p><strong>EK &rarr; AK &rarr; ActivateCredential &rarr; PCR_Extend &rarr; Quote &rarr; verify</strong>, plus PolicyPCR seal/unseal &mdash; the complete attestation chain, in pure Go.</p>
+      <p><strong>EK &rarr; AK &rarr; ActivateCredential &rarr; PCR_Extend &rarr; Quote &rarr; verify</strong>, plus PolicyPCR seal/unseal and <code>Import</code> / <code>WrapToPCR</code> &mdash; the complete attestation chain, in pure Go.</p>
     </div>
     <div class="card">
       <h4>Fleet admission</h4>
@@ -111,16 +121,20 @@
       <p><strong><code>EFI_TCG2_PROTOCOL</code></strong> transport &mdash; a firmware TPM under UEFI Boot Services, reached through an injected firmware-call closure so <code>go-tpm2</code> stays UEFI-free. <code>SubmitCommand</code> + <code>HashLogExtendEvent</code> for measured boot, and <code>GetEventLog</code> to fetch the firmware TCG event log (feeds <code>attest</code>'s <code>EventLogPolicy</code>).</p>
     </div>
     <div class="card">
-      <h4><a href="https://github.com/go-tpm2/tpm2">tpm2</a> · v0.5.0</h4>
-      <p>The command API over any <code>Transport</code> : Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest ; CreatePrimary + ECC-P256 AK ; <strong>remote attestation</strong> (Quote &rarr; VerifyQuote) ; <strong>PolicyPCR sealing</strong> ; NV storage ; the <strong>EK</strong> (EK Credential Profile) ; and <strong>credential activation</strong> (MakeCredential / ActivateCredential).</p>
+      <h4><a href="https://github.com/go-tpm2/devtpm">devtpm</a> · v0.1.0</h4>
+      <p>A <code>common.Transport</code> over the Linux kernel TPM resource-manager char device <strong><code>/dev/tpmrm0</code></strong> (one write = one command, one read = the response) &mdash; the <strong>node-side host-TPM</strong> path so <code>attest</code>'s Node can run on a real Linux node (where <code>tis</code> / <code>crb</code>'s MMIO isn't available). Validated against real <code>swtpm</code> via its raw-TPM2 socket.</p>
+    </div>
+    <div class="card">
+      <h4><a href="https://github.com/go-tpm2/tpm2">tpm2</a> · v0.6.0</h4>
+      <p>The command API over any <code>Transport</code> : Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest ; CreatePrimary + ECC-P256 AK ; <strong>remote attestation</strong> (Quote &rarr; VerifyQuote) ; <strong>PolicyPCR sealing</strong> ; NV storage ; the <strong>EK</strong> (EK Credential Profile) ; <strong>credential activation</strong> (MakeCredential / ActivateCredential) ; and <strong><code>Import</code> / <code>WrapToPCR</code></strong> &mdash; wrap an external secret (off-TPM) to a node's storage key + a PCR policy so the node imports + unseals it only when its boot PCRs match, control-plane secret sealing for attested nodes.</p>
     </div>
     <div class="card">
       <h4><a href="https://github.com/go-tpm2/attest">attest</a> · v0.3.0</h4>
       <p>Control-plane <strong>remote-attestation protocol</strong> over <code>tpm2</code> &mdash; a pure-Go <strong>Verifier</strong> + a <strong>Node</strong> agent implementing <strong>node-admission-on-Quote</strong>. A node joins a fleet only if it proves, via a <code>Quote</code> over a fresh nonce signed by an <strong>EK-bound AK</strong>, that it booted an approved stack. Two-phase handshake &mdash; enrollment (<code>MakeCredential</code> / <code>ActivateCredential</code>) then admission (nonce &rarr; <code>Quote</code> &rarr; verify signature, nonce, <code>pcrDigest</code>, policy). Pluggable <code>EKRegistry</code>, <code>Policy</code> &mdash; golden PCR digests or <strong><code>EventLogPolicy</code></strong> (TCG event-log replay against a per-measurement allowlist) &mdash; and <code>PendingStore</code> (in-memory or shared, for <strong>HA</strong> control-planes).</p>
     </div>
     <div class="card">
-      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.8.0</h4>
-      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware, and exercises the <code>attest</code> protocol end-to-end (<code>cmd/attestvalidate</code>, <code>cmd/attesteventlog</code>) &mdash; <strong>10 swtpm harnesses</strong> in all.</p>
+      <h4><a href="https://github.com/go-tpm2/validate">validate</a> · v0.9.0</h4>
+      <p>Real-TPM validation harness. Drives a real <code>swtpm</code> over the <code>tis</code> and <code>crb</code> transports from a TamaGo+QEMU guest, runs the <code>EFI_TCG2</code> measured-boot loop on real x86 <strong>OVMF</strong> firmware, and exercises the <code>attest</code> protocol end-to-end &mdash; it now runs <strong>all</strong> the swtpm harnesses, including the <code>Import</code> / <code>WrapToPCR</code> flow (<code>cmd/tpmimport</code>) and the attest-protocol harnesses (<code>cmd/attestvalidate</code>, <code>cmd/attesteventlog</code>).</p>
     </div>
   </div>
 </section>
@@ -165,10 +179,10 @@
 <section id="quality">
   <h2>Quality bar</h2>
   <ul class="features">
-    <li><strong>Pure Go.</strong> <code>CGO_ENABLED=0</code> across the org. No <code>tpm2-tss</code> shim, no <code>/dev/tpm0</code>, no kernel dependency.</li>
+    <li><strong>Pure Go.</strong> <code>CGO_ENABLED=0</code> across the org. No <code>tpm2-tss</code> shim &mdash; the <code>devtpm</code> Linux path is plain <code>/dev/tpmrm0</code> reads/writes, no cgo.</li>
     <li><strong>100% statement coverage</strong> is the bar &mdash; error branches, not just happy paths. Measured, not asserted.</li>
     <li><strong>Spec-traceable.</strong> Every register, command field, and return code cites the TCG TPM 2.0 Library, PTP, or EK Credential Profile section it implements.</li>
-    <li><strong>Transport-pluggable.</strong> One command API over TIS MMIO, CRB MMIO, and EFI_TCG2 &mdash; proven on a real <code>swtpm</code> and real OVMF.</li>
+    <li><strong>Transport-pluggable.</strong> One command API over TIS MMIO, CRB MMIO, EFI_TCG2, and the Linux <code>/dev/tpmrm0</code> resource manager &mdash; proven on a real <code>swtpm</code> and real OVMF.</li>
     <li><strong>Multi-arch.</strong> No architecture-specific assembly. Same source on amd64, arm64, riscv64, loongarch64.</li>
     <li><strong>BSD-3-Clause</strong> on every source file.</li>
   </ul>
@@ -184,8 +198,10 @@
     &mdash; its control plane uses <code>attest</code> for <strong>node
     admission</strong> and <strong>sealed-secret release</strong>, admitting a
     node only on a verified <code>Quote</code> &mdash; plus <strong>measured
-    boot</strong> of firmware payloads and <strong>TamaGo secure boot</strong>
-    &mdash; any Go project that needs a TPM without dragging in cgo or a kernel.
+    boot</strong> of firmware payloads and <strong>TamaGo secure boot</strong>,
+    and via <code>devtpm</code> the <strong>node-side host-TPM</strong> path so
+    the <code>attest</code> Node runs on a real Linux node &mdash; any Go
+    project that needs a TPM without dragging in cgo.
   </p>
 </section>
 {{ end }}

@@ -1,3 +1,5 @@
+<p align="center"><img src="https://raw.githubusercontent.com/go-tpm2/brand/main/social/go-tpm2.png" alt="go-tpm2/go-tpm2.github.io" width="720"></p>
+
 # go-tpm2.github.io
 
 Sources for **go-tpm2.github.io** — the go-tpm2 landing page.
