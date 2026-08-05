@@ -12,20 +12,15 @@ Teal palette so it reads as a sibling project page.
 
 ```text
 .
-├── hugo.toml                       Site config + hero params
+├── hugo.toml                       Site config + hero + repo-card params ([[params.repos]])
 ├── content/
-│   └── _index.md                   Homepage marker (empty)
-├── data/
-│   └── mesh.toml                   Stack visualisation: command API / common / transports
+│   └── _index.md                   Homepage marker (empty; the page body is fully custom)
 ├── layouts/
-│   ├── _default/baseof.html        Outer HTML shell
-│   ├── index.html                  Homepage body (go-tpm2 specific)
-│   └── partials/
-│       ├── nav.html                Topnav with brand + menu
-│       ├── footer.html             Footer
-│       └── mesh.html               Animated SVG (reads data/mesh.toml)
+│   └── index.html                  Homepage — hero, repo grid, inline CSS,
+│                                    light/dark/system theme toggle
 ├── static/
-│   └── css/main.css                Teal palette + mesh styling
+│   ├── favicon.svg
+│   └── img/logo.svg
 └── public/                         Hugo build output (gitignored — built by CI)
 ```
 
