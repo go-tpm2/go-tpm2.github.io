@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{/* Dark Reader repaints pages that already draw their own dark theme, as this one does: ask it to stand aside. */}}
+<meta name="darkreader-lock">
 <title>{{ .Site.Title }} — pure-Go TPM 2.0 stack</title>
 <meta name="description" content="Pure-Go, transport-agnostic TPM 2.0 stack: one narrow Transport interface and a big-endian wire codec carry every command across TIS/FIFO MMIO, the CRB command buffer, EFI_TCG2_PROTOCOL under UEFI, and the Linux /dev/tpmrm0 resource manager. CGO_ENABLED=0, 100% coverage, validated end-to-end against a real swtpm and real OVMF firmware.">
 <style>
