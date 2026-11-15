@@ -43,14 +43,12 @@
   <div class="hero"><div class="wrap">
     <div>
       <h1 class="head">go-tpm2</h1>
-      <p class="sub">Pure-Go, <strong>transport-agnostic</strong> TPM 2.0 stack &mdash; one narrow
+      <p class="sub">{{ if partial "mantra-on.html" . }}Go{{ else }}Pure-Go{{ end }}, <strong>transport-agnostic</strong> TPM 2.0 stack &mdash; one narrow
       <code>Transport</code> interface and a <strong>big-endian</strong> wire codec carry every command,
-      so you swap the backplane and keep the code. <strong>cgo-free</strong> on plain <code>go build</code>.</p>
-      <div class="cta">
-        <a class="btn btn-primary" href="https://github.com/go-tpm2/tpm2#readme">{{ partial "icons/book.html" . }}Documentation</a>
-        <a class="btn btn-ghost" href="https://github.com/go-tpm2">{{ partial "icons/github.html" . }}GitHub</a>
-      </div>
-      <div class="trust">{{ if not (partial "mantra-on.html" $) }}<span class="pill">CGO_ENABLED=0</span>{{ end }}<span class="pill">one command API, <strong>four transports</strong></span><span class="pill">TIS · CRB · EFI_TCG2 · /dev/tpmrm0</span><span class="pill">big-endian TPM2 codec</span><span class="pill">swtpm + OVMF validated</span><span class="pill">100% coverage</span></div>
+      so you swap the backplane and keep the code. <strong>{{ if not (partial "mantra-on.html" $) }}cgo-free{{ end }}</strong> on plain <code>go build</code>.</p>
+      {{/* [[params.cta]] in hugo.toml: the kit renders the row */}}
+      {{ partial "cta.html" . }}
+      <div class="trust">{{ if not (partial "mantra-on.html" $) }}{{ if not (partial "mantra-on.html" $) }}<span class="pill">CGO_ENABLED=0</span>{{ end }}{{ end }}<span class="pill">one command API, <strong>four transports</strong></span><span class="pill">TIS · CRB · EFI_TCG2 · /dev/tpmrm0</span><span class="pill">big-endian TPM2 codec</span><span class="pill">swtpm + OVMF validated</span><span class="pill">100% coverage</span></div>
     </div>
     {{ partial "hero-carousel.html" . }}
   </div></div>
