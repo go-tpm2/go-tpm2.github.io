@@ -41,7 +41,7 @@ disableKinds = ["taxonomy", "term", "RSS", "sitemap", "404"]
   name = "tpm2"
   accel = "TPM 2.0 command API over any Transport"
   kind = "api"
-  result = "The command API over any Transport: Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest; CreatePrimary + ECC-P256 AK; remote attestation (Quote → VerifyQuote); PolicyPCR sealing; NV storage; the EK (EK Credential Profile); credential activation (MakeCredential / ActivateCredential); and Import / WrapToPCR. v0.6.0."
+  result = "The command API over any Transport: Startup, GetRandom, PCR_Read / PCR_Extend, GetCapability (+typed decode), SelfTest; CreatePrimary + ECC-P256 AK; remote attestation (Quote → VerifyQuote); PolicyPCR sealing; NV storage and, since v0.9.0, NV counters (NVDefineCounter, NVIncrementAuth, NVReadCounter, tested against swtpm; the rollback counter of theca); the EK (EK Credential Profile); credential activation (MakeCredential / ActivateCredential); and Import / WrapToPCR. v0.9.0."
 [[params.repos]]
   name = "attest"
   accel = "Control-plane remote-attestation protocol"
