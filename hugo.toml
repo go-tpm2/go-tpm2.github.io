@@ -36,7 +36,7 @@ disableKinds = ["taxonomy", "term", "RSS", "sitemap", "404"]
   name = "devtpm"
   accel = "Linux /dev/tpmrm0 transport"
   kind = "transport"
-  result = "A common.Transport over the Linux kernel TPM resource-manager char device /dev/tpmrm0 (one write = one command, one read = the response) — the node-side host-TPM path so attest's Node can run on a real Linux node. Validated against real swtpm via its raw-TPM2 socket. v0.1.0."
+  result = "A common.Transport over the Linux kernel TPM resource-manager char device /dev/tpmrm0 (one write = one command, one read = the response) — the node-side host-TPM path so attest's Node can run on a real Linux node. Validated against real swtpm via its raw-TPM2 socket. v0.4.0 adds a Windows TBS transport (OpenTBS); measured only as TBS_E_TPM_NOT_FOUND on a Windows 11 VM without a TPM, not against a real TPM."
 [[params.repos]]
   name = "tpm2"
   accel = "TPM 2.0 command API over any Transport"
